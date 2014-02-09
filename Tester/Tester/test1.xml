@@ -1,0 +1,7 @@
+<rapidxmlutilities>
+	<test double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+	<test double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+</rapidxmlutilities>

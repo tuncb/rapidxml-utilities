@@ -213,3 +213,6 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+*.nupkg
+Tester/packages/repositories.config
+Tester/Tester/packages.config
