@@ -18,6 +18,7 @@ namespace rapidxml {
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   template <typename NodeType, typename Ch, typename LambdaType> inline void for_each_node(NodeType* parent, const Ch* child_name,
     LambdaType fun) {
+      if (! parent ) return;
       for (auto node = parent->first_node(child_name); node != nullptr;
         node = node->next_sibling(child_name)) {
           fun(node);
@@ -33,6 +34,7 @@ namespace rapidxml {
   /// <param name="fun">        lambda function called for each matching child node. </param>
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   template <typename NodeType, typename LambdaType> inline void for_each_node(NodeType* parent, LambdaType fun) {
+    if (! parent ) return;
     for (auto node = parent->first_node(nullptr); node != nullptr;
       node = node->next_sibling(nullptr)) {
         fun(node);
