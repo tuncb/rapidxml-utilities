@@ -20,8 +20,7 @@ BOOST_AUTO_TEST_CASE(test1) {
 
   size_t count = 0;
   rapidxml::for_each_node(top_node, [&](rapidxml::xml_node<>* node){
-    auto str = rapidxml::extract_attribute<std::string>(node, "str");
-
+    auto str = rapidxml::attribute_cast<std::string>(node, "str");
     count++;
   });
 

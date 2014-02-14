@@ -46,39 +46,65 @@ namespace detail {
 
   size_t get_length(const char* str) { return strlen(str); }
 
+
+  template <typename T, typename Ch> struct from_string_struct {
+    T from_string(const Ch* str) 
+    {
+      namespace qi = boost::spirit::qi;
+      namespace ascii = boost::spirit::ascii;
+
+      auto endstr(str + get_length(str));
+      qi_type_generator<T> qi_gen;
+
+      T val;
+      qi::phrase_parse(str, endstr, qi_gen.type(), val);
+      return val;
+    }
+  };
+
+  template <> struct from_string_struct<std::string, char> { std::string from_string(const char* str) {return std::string(str);} };
+  template <> struct from_string_struct<std::wstring, wchar_t> { std::wstring from_string(const wchar_t* str) {return std::wstring(str);} };
+
   template <typename T, typename Ch>
   T from_string(const Ch* str)
   {
-    namespace qi = boost::spirit::qi;
-    namespace ascii = boost::spirit::ascii;
-
-    auto endstr(str + get_length(str));
-    qi_type_generator<T> qi_gen;
-
-    T val;
-    qi::phrase_parse(str, endstr, qi_gen.type(), val);
-    return val;
+    from_string_struct<T, Ch> helper;
+    return helper.from_string(str);
   }
   
-  std::string  from_string(const char* str)    {return std::string(str);}
-  std::wstring from_string(const wchar_t* str) {return std::wstring(str);}
 }
 
-
-  template <typename T, typename NodeType, typename Ch>
-  T extract_attribute(NodeType* node, Ch attr_name)
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// <summary> Casts attribute value to given type. Throws error if casting fails </summary>
+  ///
+  /// <typeparam name="T">        Generic type parameter. </typeparam>
+  /// <typeparam name="NodeType"> Type of the node type. </typeparam>
+  /// <typeparam name="Ch">       Type of the char. </typeparam>
+  /// <param name="node">      [in,out] If non-null, the node. </param>
+  /// <param name="attr_name"> Name of the attribute. </param>
+  ///
+  /// <returns> The cast value of attribute. </returns>
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  template <typename T, typename NodeType, typename Ch> T attribute_cast(NodeType* node, Ch attr_name)
   {
     auto attribute = node->first_attribute(attr_name);
     return detail::from_string<T>(attribute->value());
   }
 
-  template <typename T, typename NodeType, typename Ch>
-  T extract_attribute(NodeType* node, Ch attr_name, T default_value)
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// <summary> Casts attribute value to given type. Return default value if casting fails </summary>
+  ///
+  /// <typeparam name="T">        Generic type parameter. </typeparam>
+  /// <typeparam name="NodeType"> Type of the node type. </typeparam>
+  /// <typeparam name="Ch">       Type of the ch. </typeparam>
+  /// <param name="node">          [in,out] If non-null, the node. </param>
+  /// <param name="attr_name">     Name of the attribute. </param>
+  /// <param name="default_value"> The default value. </param>
+  ///
+  /// <returns> The cast value of attribute. </returns>
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  template <typename T, typename NodeType, typename Ch> T extract_attribute(NodeType* node, Ch attr_name, T default_value)
   {
-    try { return extract_attribute(node, attr_name); } catch (...) { return default_value; }
+    try { return attribute_cast(node, attr_name); } catch (...) { return default_value; }
   }
-
-
-
-
 }
