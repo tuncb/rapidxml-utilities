@@ -8,7 +8,7 @@
 
 
 BOOST_AUTO_TEST_CASE(dummy) {
-    BOOST_CHECK_EQUAL(true, true);
+  BOOST_CHECK_EQUAL(true, true);
 }
 
 BOOST_AUTO_TEST_CASE(test1) {

@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <boost/spirit/include/qi.hpp>
 
 namespace rapidxml {
 
@@ -36,8 +37,47 @@ namespace rapidxml {
     }
   }
 
-  //template <typename NodeType, typename T>
-  //T extract_attribute(NodeType* node, char* 
+namespace detail {
+  template <typename T> struct qi_type_generator {};
+  template <> struct qi_type_generator<double> {auto type() -> decltype(boost::spirit::qi::double_){return boost::spirit::qi::double_;}};
+  template <> struct qi_type_generator<float>  {auto type() -> decltype(boost::spirit::qi::float_){return boost::spirit::qi::float_;}};
+  template <> struct qi_type_generator<int>    {auto type() -> decltype(boost::spirit::qi::int_){return boost::spirit::qi::int_;}};
+  template <> struct qi_type_generator<size_t> {auto type() -> decltype(boost::spirit::qi::uint_){return boost::spirit::qi::uint_;}};
+
+  size_t get_length(const char* str) { return strlen(str); }
+
+  template <typename T, typename Ch>
+  T from_string(const Ch* str)
+  {
+    namespace qi = boost::spirit::qi;
+    namespace ascii = boost::spirit::ascii;
+
+    auto endstr(str + get_length(str));
+    qi_type_generator<T> qi_gen;
+
+    T val;
+    qi::phrase_parse(str, endstr, qi_gen.type(), val);
+    return val;
+  }
+  
+  std::string  from_string(const char* str)    {return std::string(str);}
+  std::wstring from_string(const wchar_t* str) {return std::wstring(str);}
+}
+
+
+  template <typename T, typename NodeType, typename Ch>
+  T extract_attribute(NodeType* node, Ch attr_name)
+  {
+    auto attribute = node->first_attribute(attr_name);
+    return detail::from_string<T>(attribute->value());
+  }
+
+  template <typename T, typename NodeType, typename Ch>
+  T extract_attribute(NodeType* node, Ch attr_name, T default_value)
+  {
+    try { return extract_attribute(node, attr_name); } catch (...) { return default_value; }
+  }
+
 
 
 
