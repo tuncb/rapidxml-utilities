@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 
 namespace rapidxml {
 
@@ -38,11 +40,14 @@ namespace rapidxml {
   }
 
 namespace detail {
+
+  bool parse_error;
+
   template <typename T> struct qi_type_generator {};
   template <> struct qi_type_generator<double> {auto type() -> decltype(boost::spirit::qi::double_){return boost::spirit::qi::double_;}};
-  template <> struct qi_type_generator<float>  {auto type() -> decltype(boost::spirit::qi::float_){return boost::spirit::qi::float_;}};
-  template <> struct qi_type_generator<int>    {auto type() -> decltype(boost::spirit::qi::int_){return boost::spirit::qi::int_;}};
-  template <> struct qi_type_generator<size_t> {auto type() -> decltype(boost::spirit::qi::uint_){return boost::spirit::qi::uint_;}};
+  template <> struct qi_type_generator<float>  {auto type() -> decltype(boost::spirit::qi::float_) {return boost::spirit::qi::float_;}};
+  template <> struct qi_type_generator<int>    {auto type() -> decltype(boost::spirit::qi::int_)   {return boost::spirit::qi::int_;}};
+  template <> struct qi_type_generator<size_t> {auto type() -> decltype(boost::spirit::qi::uint_)  {return boost::spirit::qi::uint_;}};
 
   size_t get_length(const char* str) { return strlen(str); }
 
@@ -52,12 +57,16 @@ namespace detail {
     {
       namespace qi = boost::spirit::qi;
       namespace ascii = boost::spirit::ascii;
+      using boost::spirit::qi::_1;
+      using boost::phoenix::ref;
+      using ascii::space;
 
       auto endstr(str + get_length(str));
       qi_type_generator<T> qi_gen;
 
       T val;
-      qi::phrase_parse(str, endstr, qi_gen.type(), val);
+      qi::phrase_parse(str, endstr, qi_gen.type()[ref(val) = _1], space);
+      parse_error = (str != endstr);
       return val;
     }
   };
@@ -87,8 +96,11 @@ namespace detail {
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   template <typename T, typename NodeType, typename Ch> T attribute_cast(NodeType* node, Ch attr_name)
   {
+    if (! node) throw std::runtime_error("node does not exists.");
     auto attribute = node->first_attribute(attr_name);
-    return detail::from_string<T>(attribute->value());
+    if (! attribute) throw std::runtime_error("attribute does not exists.");
+    T val = detail::from_string<T>(attribute->value());
+    if (detail::parse_error) throw std::runtime_error("cast failed."); else return val;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,8 +115,22 @@ namespace detail {
   ///
   /// <returns> The cast value of attribute. </returns>
   ////////////////////////////////////////////////////////////////////////////////////////////////////
-  template <typename T, typename NodeType, typename Ch> T extract_attribute(NodeType* node, Ch attr_name, T default_value)
+  template <typename T, typename NodeType, typename Ch> T attribute_cast(NodeType* node, Ch attr_name, T default_value)
   {
-    try { return attribute_cast(node, attr_name); } catch (...) { return default_value; }
+    if (! node) return default_value;
+    auto attribute = node->first_attribute(attr_name);
+    if (! attribute) return default_value;
+    T val = detail::from_string<T>(attribute->value());
+    if (detail::parse_error) return default_value; else return val;
   }
+/*
+  template <typename NodeType, typename Ch, template ParserType> void attribute_cast(NodeType* node, Ch attr_name, ParserType parser)
+  {
+    if (! node) return default_value;
+    auto attribute = node->first_attribute(attr_name);
+    if (! attribute) return default_value;
+    T val = detail::from_string<T>(attribute->value());
+    if (detail::parse_error) return default_value; else return val;
+  }
+*/
 }
