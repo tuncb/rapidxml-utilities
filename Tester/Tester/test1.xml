@@ -1,6 +1,6 @@
 <rapidxmlutilities>
 	<test double="1.0" float="1.0" int="-10" uint = "10" str="test" />
-	<test double="1.0" float="1.0" int="-10" uint = "10" str="test" />
+	<special special_vals="11.11;22.22" special_map="me=11.11;you=22.22;" />
 	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />
 	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />
 	<test1 double="1.0" float="1.0" int="-10" uint = "10" str="test" />

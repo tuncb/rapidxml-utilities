@@ -1,7 +1,16 @@
 #define BOOST_TEST_MODULE RapidXmlUtilities
 
-#include <boost/test/unit_test.hpp>
+
+#include <map>
 #include <string>
+#include <boost/test/unit_test.hpp>
+
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/fusion/adapted/std_pair.hpp> 
+#include <boost/spirit/include/phoenix_stl.hpp>
+
 #include <rapidxml/rapidxml.hpp>
 #include <rapidxml-utilities/RapidxmlUtilities.h>
 #include <BulkFileReader/BulkFileReader.h>
@@ -14,9 +23,9 @@ struct FixtureXml1 {
     top_node = doc.first_node("rapidxmlutilities");
   }
 
-  std::unique_ptr<char []> input;
-  rapidxml::xml_document<> doc;
   rapidxml::xml_node<>* top_node;
+  rapidxml::xml_document<> doc;
+  std::unique_ptr<char []> input;
 };
 
 
@@ -24,7 +33,7 @@ BOOST_FIXTURE_TEST_SUITE (xml1, FixtureXml1)
 
 BOOST_AUTO_TEST_CASE(for_each_node_all) {
   size_t count = 0;
-  rapidxml::for_each_node(top_node, [&](rapidxml::xml_node<>* node){
+  rapidxml::for_each_node(top_node, [&](rapidxml::xml_node<>*){
     count++;
   });
   BOOST_CHECK_EQUAL(count, 5);
@@ -32,7 +41,7 @@ BOOST_AUTO_TEST_CASE(for_each_node_all) {
 
 BOOST_AUTO_TEST_CASE(for_each_node_specific) {
   size_t count = 0;
-  rapidxml::for_each_node(top_node, "test1", [&](rapidxml::xml_node<>* node){
+  rapidxml::for_each_node(top_node, "test1", [&](rapidxml::xml_node<>*){
     count++;
   });
   BOOST_CHECK_EQUAL(count, 3);
@@ -60,6 +69,39 @@ BOOST_AUTO_TEST_CASE(attribute_cast_double_error) {
   auto node = top_node->first_node("test");
   auto value = rapidxml::attribute_cast<double>(node, "str", 1.0);
   BOOST_CHECK_EQUAL(value, 1.0);
+}
+
+BOOST_AUTO_TEST_CASE(attribute_cast_special) {
+  namespace qi = boost::spirit::qi;
+  namespace ph = boost::phoenix;
+
+  auto node = top_node->first_node("special");
+  
+  double d1, d2;
+  qi::rule<const char*> rule = qi::double_[ph::ref(d1) = qi::_1] >> ";" 
+                               >> qi::double_[ph::ref(d2) = qi::_1];
+
+  rapidxml::attribute_cast_special(node, "special_vals", rule);
+
+  BOOST_CHECK_EQUAL(d1, 11.11);
+  BOOST_CHECK_EQUAL(d2, 22.22);
+}
+
+BOOST_AUTO_TEST_CASE(attribute_cast_special_output) {
+  namespace qi = boost::spirit::qi;
+  namespace ph = boost::phoenix;
+
+  auto node = top_node->first_node("special");
+  
+  std::map<std::string, double> map;
+
+  qi::rule<const char*> rule = *(*(qi::char_-"=") >> "=" >> qi::double_ >> ";");
+
+  rapidxml::attribute_cast_special(node, "special_map", rule, map);
+
+  BOOST_CHECK_EQUAL(map.size(), 2);
+  BOOST_CHECK_EQUAL(map["me"], 11.11);
+  BOOST_CHECK_EQUAL(map["you"], 22.22);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

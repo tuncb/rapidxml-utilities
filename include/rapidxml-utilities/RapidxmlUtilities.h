@@ -53,22 +53,38 @@ namespace detail {
 
   size_t get_length(const char* str) { return strlen(str); }
 
+  template <typename Ch, typename ParserType> void parse_string(const Ch* str, const ParserType& parser) 
+  {
+    namespace qi = boost::spirit::qi;
+    namespace ascii = boost::spirit::ascii;
+    using ascii::space;
+
+    auto endstr(str + get_length(str)); // get length dows not work with wchar_t
+    qi::phrase_parse(str, endstr, parser, space);
+    parse_error = (str != endstr);
+  }    
+
+  template <typename Ch, typename ParserType, typename OutputType> void parse_string
+    (const Ch* str, const ParserType& parser, OutputType& out) 
+  {
+    namespace qi = boost::spirit::qi;
+    namespace ascii = boost::spirit::ascii;
+    using ascii::space;
+
+    auto endstr(str + get_length(str)); // get length dows not work with wchar_t
+    qi::phrase_parse(str, endstr, parser, space, out);
+    parse_error = (str != endstr);
+  }   
 
   template <typename T, typename Ch> struct from_string_struct {
     T from_string(const Ch* str) 
     {
-      namespace qi = boost::spirit::qi;
-      namespace ascii = boost::spirit::ascii;
       using boost::spirit::qi::_1;
       using boost::phoenix::ref;
-      using ascii::space;
-
-      auto endstr(str + get_length(str));
-      qi_type_generator<T> qi_gen;
-
       T val;
-      qi::phrase_parse(str, endstr, qi_gen.type()[ref(val) = _1], space);
-      parse_error = (str != endstr);
+
+      qi_type_generator<T> gen;
+      parse_string(str, gen.type()[ref(val) = _1]);
       return val;
     }
   };
@@ -82,7 +98,8 @@ namespace detail {
     from_string_struct<T, Ch> helper;
     return helper.from_string(str);
   }
-  
+
+  inline void do_nothing() {}
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,14 +142,38 @@ namespace detail {
     T val = detail::from_string<T>(attribute->value());
     if (detail::parse_error) return default_value; else return val;
   }
-/*
-  template <typename NodeType, typename Ch, template ParserType> void attribute_cast(NodeType* node, Ch attr_name, ParserType parser)
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// <summary>Casts attribute value to given type using the rule given. calss onError on error.</summary>
+  ///
+  /// <typeparam name="NodeType">  Type of the node type.</typeparam>
+  /// <typeparam name="Ch">        Type of the ch.</typeparam>
+  /// <typeparam name="ParserType">Type of the parser type.</typeparam>
+  /// <param name="node">     [in,out] If non-null, the node.</param>
+  /// <param name="attr_name">Name of the attribute.</param>
+  /// <param name="rule">   The qi rule used in parsing.</param>
+  /// <param name="on_error"> (Optional) function to call if parsing fails.</param>
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  template <typename NodeType, typename Ch, typename RuleType> void attribute_cast_special(
+    NodeType* node, Ch attr_name, const RuleType& rule, std::function<void()> on_error = detail::do_nothing)
   {
-    if (! node) return default_value;
+    if (!node) {on_error(); return;};
     auto attribute = node->first_attribute(attr_name);
-    if (! attribute) return default_value;
-    T val = detail::from_string<T>(attribute->value());
-    if (detail::parse_error) return default_value; else return val;
+    if (! attribute) {on_error(); return;};
+
+    detail::parse_string(attribute->value(), rule);
+    if (detail::parse_error) on_error;
   }
-*/
+
+  template <typename NodeType, typename Ch, typename RuleType, typename OutputType> void attribute_cast_special
+    ( NodeType* node, Ch attr_name, const RuleType& rule, OutputType& out, std::function<void()> on_error = detail::do_nothing)
+  {
+    if (!node) {on_error(); return;};
+    auto attribute = node->first_attribute(attr_name);
+    if (! attribute) {on_error(); return;};
+
+    detail::parse_string(attribute->value(), rule, out);
+    if (detail::parse_error) on_error;
+  }
+
 }
