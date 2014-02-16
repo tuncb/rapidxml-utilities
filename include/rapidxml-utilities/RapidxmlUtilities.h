@@ -165,15 +165,19 @@ namespace detail {
     if (detail::parse_error) on_error;
   }
 
-  template <typename NodeType, typename Ch, typename RuleType, typename OutputType> void attribute_cast_special
-    ( NodeType* node, Ch attr_name, const RuleType& rule, OutputType& out, std::function<void()> on_error = detail::do_nothing)
-  {
-    if (!node) {on_error(); return;};
-    auto attribute = node->first_attribute(attr_name);
-    if (! attribute) {on_error(); return;};
+  //template <typename VectorType, typename NodeType, typename Ch, typename SeperatorType> void attribute_cast_pushback(
+  //  NodeType* node, Ch attr_name, VectorType& vec, SeperatorType seperator = boost::spirit::ascii::space
+  //  , std::function<void()> on_error = detail::do_nothing)
+  //{
+  //  if (!node) {on_error(); return;};
+  //  auto attribute = node->first_attribute(attr_name);
+  //  if (! attribute) {on_error(); return;};
 
-    detail::parse_string(attribute->value(), rule, out);
-    if (detail::parse_error) on_error;
-  }
+
+
+  //  detail::parse_string(attribute->value(), rule);
+  //  if (detail::parse_error) on_error;
+  //}
+
 
 }

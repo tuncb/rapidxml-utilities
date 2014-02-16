@@ -8,8 +8,6 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/fusion/adapted/std_pair.hpp> 
-#include <boost/spirit/include/phoenix_stl.hpp>
 
 #include <rapidxml/rapidxml.hpp>
 #include <rapidxml-utilities/RapidxmlUtilities.h>
@@ -87,21 +85,6 @@ BOOST_AUTO_TEST_CASE(attribute_cast_special) {
   BOOST_CHECK_EQUAL(d2, 22.22);
 }
 
-BOOST_AUTO_TEST_CASE(attribute_cast_special_output) {
-  namespace qi = boost::spirit::qi;
-  namespace ph = boost::phoenix;
 
-  auto node = top_node->first_node("special");
-  
-  std::map<std::string, double> map;
-
-  qi::rule<const char*> rule = *(*(qi::char_-"=") >> "=" >> qi::double_ >> ";");
-
-  rapidxml::attribute_cast_special(node, "special_map", rule, map);
-
-  BOOST_CHECK_EQUAL(map.size(), 2);
-  BOOST_CHECK_EQUAL(map["me"], 11.11);
-  BOOST_CHECK_EQUAL(map["you"], 22.22);
-}
 
 BOOST_AUTO_TEST_SUITE_END()
