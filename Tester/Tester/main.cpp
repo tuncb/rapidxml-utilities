@@ -29,22 +29,6 @@ struct FixtureXml1 {
 
 BOOST_FIXTURE_TEST_SUITE (xml1, FixtureXml1)
 
-BOOST_AUTO_TEST_CASE(for_each_node_all) {
-  size_t count = 0;
-  rapidxml::for_each_node(top_node, [&](rapidxml::xml_node<>*){
-    count++;
-  });
-  BOOST_CHECK_EQUAL(count, 5);
-}
-
-BOOST_AUTO_TEST_CASE(for_each_node_specific) {
-  size_t count = 0;
-  rapidxml::for_each_node(top_node, "test1", [&](rapidxml::xml_node<>*){
-    count++;
-  });
-  BOOST_CHECK_EQUAL(count, 3);
-}
-
 BOOST_AUTO_TEST_CASE(attribute_cast_string) {
   auto node = top_node->first_node("test");
   auto str = rapidxml::attribute_cast<std::string>(node, "str");
